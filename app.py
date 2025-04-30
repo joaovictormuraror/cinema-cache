@@ -1,59 +1,59 @@
 from flask import Flask, request, jsonify
 import requests
 import banco_dados as db
-from config import OMDB_API_KEY, OMDB_API_URL
+from config import CHAVE_API_OMDB, URL_API_OMDB
 
 app = Flask(__name__)
 
-def fetch_from_omdb(params):
-    params['apikey'] = OMDB_API_KEY
-    response = requests.get(OMDB_API_URL, params=params)
-    if response.status_code == 200:
-        data = response.json()
-        if data.get("Response") == "True":
-            return data
+def buscar_no_omdb(parametros):
+    parametros['apikey'] = CHAVE_API_OMDB
+    resposta = requests.get(URL_API_OMDB, params=parametros)
+    if resposta.status_code == 200:
+        dados = resposta.json()
+        if dados.get("Response") == "True":
+            return dados
     return None
 
 @app.route('/movies', methods=['GET'])
 def listar_filmes():
-    with db.conn.cursor() as cur:
-        cur.execute("SELECT title FROM movies")
-        movies = cur.fetchall()
-    return jsonify(movies)
+    with db.conexao.cursor() as cur:
+        cur.execute("SELECT titulo FROM filmes")
+        filmes = cur.fetchall()
+    return jsonify([f[0] for f in filmes])
 
 @app.route('/search/title', methods=['GET'])
 def buscar_por_titulo():
-    titulo = request.args.get('title')
+    titulo = request.args.get('titulo')
     if not titulo:
-        return jsonify({'error': 'Title is required'}), 400
+        return jsonify({'error': 'Título obrigatório'}), 400
 
-    local_data = db.buscar_por_titulo(titulo)  # Corrigido
-    if local_data:
-        return jsonify(local_data[5])  # índice do campo JSONB
+    dados_local = db.buscar_filme_titulo(titulo)
+    if dados_local:
+        return jsonify(dados_local[5]) 
 
-    external_data = fetch_from_omdb({'t': titulo})
-    if external_data:
-        db.inserir_filme(external_data)
-        return jsonify(external_data)
+    dados_externos = buscar_no_omdb({'t': titulo})
+    if dados_externos:
+        db.salvar_filme(dados_externos)
+        return jsonify(dados_externos)
 
-    return jsonify({'error': 'Movie not found'}), 404
+    return jsonify({'error': 'Filme não encontrado'}), 404
 
 @app.route('/search/id', methods=['GET'])
 def buscar_por_id():
     imdb_id = request.args.get('id')
     if not imdb_id:
-        return jsonify({'error': 'ID is required'}), 400
+        return jsonify({'error': 'ID obrigatório'}), 400
 
-    local_data = db.buscar_por_id(imdb_id)  # Corrigido
-    if local_data:
-        return jsonify(local_data[5])  # índice do campo JSONB
+    dados_local = db.buscar_filme_id(imdb_id)  # Corrigido
+    if dados_local:
+        return jsonify(dados_local[5])  # índice do campo JSONB
 
-    external_data = fetch_from_omdb({'i': imdb_id})
-    if external_data:
-        db.inserir_filme(external_data)
-        return jsonify(external_data)
+    dados_externos = buscar_no_omdb({'i': imdb_id})
+    if dados_externos:
+        db.salvar_filme(dados_externos)
+        return jsonify(dados_externos)
 
-    return jsonify({'error': 'Movie not found'}), 404
+    return jsonify({'error': 'Filme não encontrado'}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)

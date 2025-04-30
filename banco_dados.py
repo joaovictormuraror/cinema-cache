@@ -3,6 +3,8 @@ import psycopg
 
 import json
 
+
+
 from config import URL_BANCO_DADOS
 
 conexao = psycopg.connect(URL_BANCO_DADOS)
@@ -28,7 +30,6 @@ def buscar_filme_id(imdb_id):
         cur.execute("SELECT * FROM filmes WHERE id_imdb = %s", (imdb_id,))
         return cur.fetchone()
 
-import json
 
 def salvar_filme(filme):
     with conexao.cursor() as cur:

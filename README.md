@@ -23,11 +23,7 @@ pip install psycopg['binary']
 pip install requests
 pip install jsonify
 ```
-__4. Configurar o banco de dados (caso ainda não esteja configurado)__
-```
-flask --app banco_dados.py run
-```
-__5. Executar a aplicação__
+__4. Executar a aplicação__
 ```bash
 flask --app app.py run --debug
 ```
